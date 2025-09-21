@@ -13,23 +13,14 @@ def transcribe_endpoint():
     data = request.get_json(silent=True) or {}
     video_url = data.get("video_url") or request.args.get("video_url")
     if not video_url:
-        return jsonify({"error": "Informe 'video_url'"}), 400
+        return jsonify({"error": "Informe 'video_url' no JSON ou query string"}), 400
 
-    language = data.get("language")
+    language   = data.get("language")
     model_size = data.get("model_size")
     extra_meta = data.get("meta", {})
-    # NOVO: permitir desligar envio ao Make
-    send_to_make = bool(data.get("callback_to_make", True))
 
     try:
-        result = process_video(
-            video_url=video_url,
-            force_language=language,
-            model_size=model_size,
-            extra_meta=extra_meta,
-            send_to_make=send_to_make
-        )
-        # Retorna o resultado completo para o Make consumir diretamente
+        result = process_video(video_url, force_language=language, model_size=model_size, extra_meta=extra_meta)
         return jsonify({"ok": True, "result": result})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
