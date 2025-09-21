@@ -1,15 +1,26 @@
-# YouTube → Áudio → Texto → Make (Webhook)
+# YouTube → Áudio → Texto (sem webhook)
 
-Este projeto baixa o áudio de um vídeo do YouTube com `yt-dlp`, transcreve com `faster-whisper` e envia o resultado para um **Webhook do Make**.
+Chame `POST /transcribe` e receba a transcrição na resposta.
 
-## Variáveis de ambiente
-- `MAKE_WEBHOOK_URL` (obrigatória): URL do webhook do Make (Integromat).
-- `YTDLP_COOKIES_B64` (opcional): cookies em Base64 (formato Netscape) para vídeos com restrição.
-- `WHISPER_MODEL_SIZE` (opcional): tiny, base, small, medium, large-v3 (padrão `small`).
-- `WHISPER_COMPUTE_TYPE` (opcional): int8, float16, int8_float16, int8_float32 (padrão `int8`).
-- `WHISPER_CPU_THREADS` (opcional): threads CPU (padrão 4).
+### Exemplo de chamada
+POST https://SEU-SERVICO.onrender.com/transcribe
+Content-Type: application/json
+{
+  "video_url": "https://www.youtube.com/watch?v=VIDEO_ID",
+  "language": "pt",
+  "meta": {"origem":"make"}
+}
 
-## Uso no Render (Web Service)
-1. Conecte este repositório no Render e **deploy** com `render.yaml`.
-2. Configure as env vars no painel (pelo menos `MAKE_WEBHOOK_URL`).
-3. Faça uma requisição:
+### Resposta (resumo)
+{
+  "ok": true,
+  "result": {
+    "video_url": "...",
+    "model": "small",
+    "language": "pt",
+    "language_probability": 0.98,
+    "duration": 321.4,
+    "text": "transcrição completa...",
+    "segments": [{ "start": 0.0, "end": 5.2, "text": "..." }]
+  }
+}
