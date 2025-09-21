@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: youtube-transcriber
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: MAKE_WEBHOOK_URL
+        sync: false      # defina no painel do Render
+      - key: WHISPER_MODEL_SIZE
+        value: small     # tiny/base/small/medium/large-v3
+      - key: WHISPER_COMPUTE_TYPE
+        value: int8
+      - key: WHISPER_CPU_THREADS
+        value: "4"
+      - key: YTDLP_COOKIES_B64
+        sync: false      # opcional: cookies em Base64 para yt-dlp
