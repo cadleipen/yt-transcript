@@ -1,0 +1,37 @@
+name: Get Audio URL
+
+on:
+  repository_dispatch:
+    types: [get_audio_url]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run yt-dlp to get audio URL
+        env:
+          VIDEO_URL: ${{ github.event.client_payload.video_url }}
+          CALLBACK_URL: ${{ github.event.client_payload.callback_url }}
+          CALLBACK_SECRET: ${{ secrets.CALLBACK_SECRET }}
+          # opcional: cookies do YouTube (base64) vindos do payload ou de secret
+          YTDLP_COOKIES_B64: ${{ github.event.client_payload.cookies_b64 || secrets.YTDLP_COOKIES_B64 }}
+        run: python scripts/get_audio_url.py
