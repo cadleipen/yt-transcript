@@ -1,0 +1,64 @@
+name: Transcrever YouTube e enviar para Make
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "URL do vídeo YouTube"
+        required: true
+      language:
+        description: "Idioma forçado (opcional, ex: pt)"
+        required: false
+      model_size:
+        description: "Modelo Whisper (tiny/base/small/medium/large-v3)"
+        required: false
+  schedule:
+    - cron: "0 12 * * *" # opcional, roda todo dia 12:00 UTC, ajuste se quiser
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Instalar dependências Python
+        run: |
+          pip install --no-cache-dir -r requirements.txt
+
+      - name: Transcrever e enviar ao Make
+        env:
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          YTDLP_COOKIES_B64: ${{ secrets.YTDLP_COOKIES_B64 }}
+          WHISPER_MODEL_SIZE: ${{ github.event.inputs.model_size || 'small' }}
+        run: |
+          python - << 'PY'
+          import os, json
+          from transcriber import process_video
+
+          video_url = "${{ github.event.inputs.video_url }}".strip()
+          language  = "${{ github.event.inputs.language }}".strip() or None
+          model_size= os.getenv("WHISPER_MODEL_SIZE", "small")
+
+          if not video_url:
+              raise SystemExit("Informe 'video_url' como input do workflow.")
+
+          result = process_video(
+              video_url=video_url,
+              force_language=language,
+              model_size=model_size,
+              extra_meta={"trigger": "github_actions"},
+              send_to_make=True
+          )
+          print(json.dumps(result, ensure_ascii=False)[:5000])
+          PY
